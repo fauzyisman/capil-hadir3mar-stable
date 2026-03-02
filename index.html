@@ -196,7 +196,7 @@ let WATERMARK_INFO = {
 /* ====== NOTIF & SPINNER ====== */
 function notify(type='info', text='', {timeout=6000} = {}){
   const el = document.getElementById('message');
-  const icons = { info:'ℹ️', success:'✅', warn:'⚠️', error:'⛔' };
+  const icons = { info:'ℹ️', success:'', warn:'', error:'' };
   const colors = {
     info:   {bg:'#eef6ff', border:'#cfe3ff', fg:'#0a3d62'},
     success:{bg:'#e8fff1', border:'#baf5d1', fg:'#146c43'},
@@ -763,3 +763,4 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopScan
 </script>
 </body>
 </html>
+
