@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Capil-Hadir</title>
+
+  <link id="mainCss" rel="stylesheet" href="style.css">
+  <script>
+    (function(){
+      const link = document.getElementById('mainCss');
+      if (link && !/\?v=/.test(link.href)) link.href = link.href + '?v=' + Date.now();
+    })();
+  </script>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+<main>
+  <header class="site-header">
+    <img src="logo_majene.png" alt="Logo Majene" class="logo-majene">
+    <div class="instansi-info">
+      <h1>DISDUKCAPIL KABUPATEN MAJENE</h1>
+      <p>Dinas Kependudukan dan Pencatatan Sipil</p>
+    </div>
+  </header>
+
+  <h2>Capil-Hadir</h2>
+
+  <div class="top-controls">
+    <div id="tanggalHari"></div>
+    <h4>Waktu: <span id="jamDigital"></span></h4>
+  </div>
+
+  
+
+  <form id="absenForm">
+    <label for="nip">Masukkan NIP:</label>
+    <input type="text" id="nip" name="nip" required pattern="^[A-Za-z0-9_-]{3,20}$" inputmode="text" />
+    <button type="submit" id="btnManualAbsen">
+      Proses Absen <span class="spinner" style="display:none"></span>
+    </button>
+    <button type="button" id="btnApel">
+      Absen Apel <span class="spinner" style="display:none"></span>
+    </button>
+  </form>
+
+  <br>
+
+  <button id="btnScan">Mulai Scan QR Code <span class="spinner" style="display:none"></span></button>
+  <div id="scanner" style="display:none"></div>
+  <br><br>
+
+  <button class="btn-izin" id="btnIzin">Ajukan Izin/Sakit/Pulang Cepat</button>
+  <div id="izinForm" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="modal-content izin-modal">
+
+    <!-- HEADER (TETAP) -->
+    <div class="izin-header">
+      <h4>Pengajuan Izin / Sakit / Pulang Cepat</h4>
+    </div>
+
+    <!-- BODY (YANG DISCROLL) -->
+    <div class="izin-body">
+
+      <label for="jenis">Jenis:</label>
+      <select id="jenis">
+        <option value="izin">Izin</option>
+        <option value="sakit">Sakit</option>
+        <option value="pulang cepat">Pulang Cepat</option>
+      </select>
+
+      <label for="slot">Waktu Pengajuan:</label>
+      <select id="slot" required>
+        <option value="">-- Pilih Waktu --</option>
+        <option value="PAGI">Pagi (Absen Masuk)</option>
+        <option value="SIANG">Siang (Absen Siang)</option>
+        <option value="PULANG">Pulang (Absen Pulang)</option>
+      </select>
+
+      <label for="keterangan">Keterangan:</label>
+      <textarea id="keterangan" rows="10" minlength="5"></textarea>
+
+      <label for="bukti">Upload Bukti (format apapun):</label>
+      <input type="file" id="bukti" />
+      <div class="note" id="buktiNote"></div>
+
+      <div id="izinLoading" style="display:none">⏳ Mengirim pengajuan...</div>
+
+    </div>
+
+    <!-- FOOTER (TETAP DI BAWAH) -->
+    <div class="izin-footer">
+      <button id="btnKirimIzin">Kirim</button>
+      <button id="btnBatalIzin">Batal</button>
+    </div>
+
+  </div>
+</div>
+
+
+  
+
+  <br><br>
+  <button id="btnRiwayat">Lihat Riwayat <span class="spinner" style="display:none"></span></button>
+  <br><br>
+
+  <div id="message" role="status" aria-live="polite"></div>
+  <br>
+
+  <div id="riwayat"></div>
+
+     <!-- Kemenu Rekap -->
+     <br>
+    <a href="/detail" class="rekap-btn" rel="noopener">
+  <span>Menu Rekap Presensi</span>
+  <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18">
+    <path d="M5 12h12m0 0-5-5m5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</a>
+
+        
+   
+
+
+  <button id="btnRules" class="btn-secondary">ℹ️ Panduan & Aturan</button>
+  <div id="rulesModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content rules-content">
+      <div class="modal-header">
+        <h4>Panduan & Aturan Presensi</h4>
+      </div>
+      <div id="rulesContent" class="modal-body"></div>
+      <div class="modal-actions">
+        <button id="btnCloseRules">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal SELFIE (untuk absen reguler; apel tidak pakai) -->
+<div id="selfieModal" class="modal" aria-hidden="true">
+  <div class="modal-content selfie-modal">
+
+    <!-- HEADER (TETAP) -->
+    <div class="selfie-header">
+      <h4>Ambil Selfie Verifikasi</h4>
+    </div>
+
+    <!-- BODY (SCROLL) -->
+    <div class="selfie-body">
+      <div class="selfie-box">
+        <div id="selfiePreview" class="hidden">
+          <img alt="Preview selfie">
+        </div>
+        <video id="selfieVideo" autoplay playsinline></video>
+        <canvas id="selfieCanvas"></canvas>
+
+        <button id="btnSelfieStart">Mulai Kamera</button>
+        <button id="btnSelfieShot" disabled>Ambil Selfie</button>
+        <button id="btnSelfieRetake" class="hidden">Ulangi</button>
+      </div>
+    </div>
+
+    <!-- FOOTER (TETAP DI BAWAH) -->
+    <div class="selfie-footer">
+      <button id="btnSendSelfie" disabled>Kirim & Simpan</button>
+      <button id="btnCancelSelfie">Batal</button>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<script>
+/* ====== KONFIG (dari backend) ====== */
+const CONFIG = {
+  // Ganti ke /exec aktif milik project Apps Script kamu:
+  scriptUrl: 'https://script.google.com/macros/s/AKfycby_RxPu-r9hQEsZ4AU8lV95HzKUIK7yQffvKPbPYo6DncsFSAnKib2C5wWk1qTstCPl/exec',
+  APP_KEY: 'absendukcapilmajene',
+  OFFICE_LAT:null, OFFICE_LNG:null, MAX_RADIUS:null, MAX_ACCURACY:null,
+  APEL_START:null, APEL_END:null,
+  SELFIE_REQUIRED:true, MAX_SELFIE_MB:5, MAX_BUKTI_MB:10
+};
+let REMOTE_READY=false;
+
+/* ====== WATERMARK INFO ====== */
+let WATERMARK_INFO = {
+  nama: '',
+  nip: '',
+  tanggal: '',
+  jamFull: '',
+  lat: '',
+  lng: ''
+};
+
+/* ====== NOTIF & SPINNER ====== */
+function notify(type='info', text='', {timeout=6000} = {}){
+  const el = document.getElementById('message');
+  const icons = { info:'ℹ️', success:'✅', warn:'⚠️', error:'⛔' };
+  const colors = {
+    info:   {bg:'#eef6ff', border:'#cfe3ff', fg:'#0a3d62'},
+    success:{bg:'#e8fff1', border:'#baf5d1', fg:'#146c43'},
+    warn:   {bg:'#fff7e6', border:'#ffe1a8', fg:'#7a4e00'},
+    error:  {bg:'#ffecec', border:'#ffb3b3', fg:'#9d1c1c'}
+  };
+  const c = colors[type] || colors.info;
+  el.style.background = c.bg; el.style.border = '1px solid '+c.border; el.style.color = c.fg; el.style.padding='10px'; el.style.borderRadius='8px';
+  el.innerHTML = `<strong style="margin-right:6px">${icons[type]||''}</strong>${text}`;
+  if (timeout) { clearTimeout(notify._t); notify._t = setTimeout(()=>{ el.innerHTML=''; el.removeAttribute('style'); }, timeout); }
+}
+function setLoading(btn, loading=true, labelWhenLoading=null){
+  if(!btn) return;
+  if (loading) {
+    if (!btn.dataset._label) btn.dataset._label = (btn.textContent || '').trim();
+    if (labelWhenLoading) btn.textContent = labelWhenLoading;
+  } else {
+    const original = btn.dataset._label;
+    if (original != null) { btn.textContent = original; delete btn.dataset._label; }
+  }
+  const sp = btn.querySelector('.spinner'); if (sp) sp.style.display = loading ? 'inline-block' : 'none';
+  btn.disabled = !!loading;
+}
+
+/* ====== MUAT CONFIG ====== */
+async function loadRemoteConfig(){
+  const res = await fetch(CONFIG.scriptUrl, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({ key:CONFIG.APP_KEY, config:'true' })
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const data = await res.json();
+  if (!data || data.ok === false) throw new Error(data && data.error ? data.error : 'Config not OK');
+  if (!data.office || typeof data.office.lat === 'undefined' || typeof data.office.lng === 'undefined')
+    throw new Error("Payload config tidak lengkap (office.lat/lng kosong).");
+
+  CONFIG.OFFICE_LAT   = Number(data.office.lat);
+  CONFIG.OFFICE_LNG   = Number(data.office.lng);
+  CONFIG.MAX_RADIUS   = Number((data.geo && data.geo.max_radius_m) || 50);
+  CONFIG.MAX_ACCURACY = Number((data.geo && data.geo.max_accuracy_m) || 75);
+  CONFIG.APEL_START   = (data.apel && data.apel.start) || '07:30';
+  CONFIG.APEL_END     = (data.apel && data.apel.end)   || '08:00';
+
+  if (data.upload){
+    CONFIG.SELFIE_REQUIRED = !!data.upload.selfie_required;
+    CONFIG.MAX_SELFIE_MB   = Number(data.upload.max_selfie_mb || 5);
+    CONFIG.MAX_BUKTI_MB    = Number(data.upload.max_bukti_mb || 10);
+  }
+
+  const note = document.getElementById('buktiNote');
+  if (note) note.textContent = `Batas ukuran bukti: maksimal ${CONFIG.MAX_BUKTI_MB} MB.`;
+
+  // === (C) UPDATE RULES agar dinamis mengikuti Config ===
+  const rules = document.getElementById('rulesContent');
+  if (rules) {
+    // Lakukan replace terhadap angka default di RULES_HTML
+const r = buildRegulerRulesFromSimple(data.win_simple || {});
+
+rules.innerHTML = RULES_HTML
+  .replace('{{APEL}}', `${CONFIG.APEL_START}–${CONFIG.APEL_END}`)
+  .replace('{{MASUK}}', r.masuk)
+  .replace('{{SIANG}}', r.siang)
+  .replace('{{PULANG}}', r.pulang)
+  .replace('Radius kantor: 25 m.', `Radius kantor: ${CONFIG.MAX_RADIUS} m.`)
+  .replace('Akurasi maksimal: 50 m.', `Akurasi maksimal: ${CONFIG.MAX_ACCURACY} m.`);
+
+  }
+
+  REMOTE_READY=true;
+  notify('success', 'Konfigurasi berhasil dimuat.');
+}
+loadRemoteConfig().catch(err=>notify('error','Gagal memuat konfigurasi: '+err.message));
+
+
+
+function buildRegulerRulesFromSimple(winSimple){
+  if(!winSimple) return { masuk:'-', siang:'-', pulang:'-' };
+
+  const s = winSimple.SENKAM || {};
+  const j = winSimple.JUMAT || {};
+
+  const masuk = (s.masukStart && s.masukEnd)
+    ? `${s.masukStart}–${s.masukEnd}` : '-';
+
+  const siang = (s.siangStart && s.siangEnd)
+    ? `${s.siangStart}–${s.siangEnd}` : '-';
+
+  const pulang = (s.pulangStart)
+    ? `≥ ${s.pulangStart} (Sen–Kam) / ≥ ${j.pulangStart || '-'} (Jum) s.d. ${s.pulangEnd || '23:59'}`
+    : '-';
+
+  return { masuk, siang, pulang };
+}
+
+
+
+
+/* ====== JAM & TANGGAL ====== */
+function updateJamLocal(){
+  const now=new Date();
+  const hari=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][now.getDay()];
+  const bulan=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][now.getMonth()];
+  document.getElementById('tanggalHari').textContent = `${hari}, ${now.getDate()} ${bulan} ${now.getFullYear()}`;
+}
+setInterval(updateJamLocal,1000); updateJamLocal();
+let clockTimer=null;
+function startTicking(date){
+  const el=document.getElementById('jamDigital');
+  if(clockTimer) clearInterval(clockTimer);
+  let current=date||new Date();
+  el.textContent=current.toLocaleTimeString('id-ID',{hour12:false});
+  clockTimer=setInterval(()=>{ el.textContent=current.toLocaleTimeString('id-ID',{hour12:false}); current.setSeconds(current.getSeconds()+1); },1000);
+}
+function startServerClock(serverHHmm){
+  if(!serverHHmm) return;
+  const [h,m]=String(serverHHmm).split(':').map(Number);
+  const d=new Date(); d.setHours(h||0,m||0,0,0);
+  startTicking(d);
+}
+document.readyState==='loading'
+ ? document.addEventListener('DOMContentLoaded', ()=>startTicking(new Date()))
+ : startTicking(new Date());
+
+/* ====== GEO & API ====== */
+function getDistance(lat1,lng1,lat2,lng2){
+  const R=6371e3,toRad=a=>a*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function getLocation(){
+  return new Promise((resolve,reject)=>{
+    navigator.geolocation.getCurrentPosition(
+      pos=>resolve({lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy}),
+      err=>reject('Pastikan GPS aktif. '+err.message),
+      { enableHighAccuracy:true, timeout:12000 }
+    );
+  });
+}
+async function apiPost(payload){
+  const res = await fetch(CONFIG.scriptUrl, {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({ ...payload, key:CONFIG.APP_KEY }).toString()
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const data = await res.json();
+  if(data.serverTime) startServerClock((data.serverTime||'').slice(0,5));
+  return data;
+}
+
+/* ====== RIWAYAT ====== */
+/* (B) Versi baru: dukung role 1x (penjaga malam/kebersihan) */
+function renderRiwayat(result){
+  const wrap = document.getElementById('riwayat');
+  if(!result || !result.riwayat){ wrap.innerHTML=''; return; }
+  const r = result.riwayat;
+  const role = (result.role ? String(result.role).toLowerCase() : '');
+  const isSingle = /penjaga malam|kebersihan/.test(role);
+
+  let rows = '';
+  if (isSingle) {
+    rows += `<tr><td>Kehadiran</td><td>${r['Kehadiran'] ?? '-'}</td></tr>`;
+  } else {
+    rows += `
+      <tr><td>Apel</td><td>${r['Absen Apel'] ?? '-'}</td></tr>
+      <tr><td>Masuk</td><td>${r['Absen Masuk'] ?? '-'}</td></tr>
+      <tr><td>Siang</td><td>${r['Absen Siang'] ?? '-'}</td></tr>
+      <tr><td>Pulang</td><td>${r['Absen Pulang'] ?? '-'}</td></tr>`;
+  }
+
+  wrap.innerHTML = `
+    <h3>Riwayat Hari Ini</h3>
+    <p><strong>Nama:</strong> ${result.nama || ''}${role ? ` &middot; <em>${role}</em>` : ''}</p>
+    <table>
+      <thead><tr><th>Jenis</th><th>Waktu</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ====== MODAL IZIN ====== */
+const izinModal=document.getElementById('izinForm');
+const jenisSelect = document.getElementById('jenis');
+const slotSelect  = document.getElementById('slot');
+
+jenisSelect.addEventListener('change', () => {
+  if (jenisSelect.value === 'pulang cepat') {
+    slotSelect.value = 'PULANG';
+    slotSelect.disabled = true;
+  } else {
+    slotSelect.disabled = false;
+    if (slotSelect.value === 'PULANG') slotSelect.value = '';
+  }
+});
+document.getElementById('btnIzin').addEventListener('click', ()=>{
+  izinModal.style.display='block'; izinModal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open');
+});
+document.getElementById('btnBatalIzin').addEventListener('click', ()=>{
+  izinModal.style.display='none'; izinModal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open');
+});
+document.getElementById('btnKirimIzin').addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  const nip=document.getElementById('nip').value.trim();
+  const jenis=document.getElementById('jenis').value;
+  const ket=document.getElementById('keterangan').value.trim();
+  const f=document.getElementById('bukti').files[0];
+  const slot = document.getElementById('slot').value;
+if (!slot) return notify('warn','Silakan pilih waktu izin.');
+
+  if(!/^[A-Za-z0-9_-]{3,20}$/.test(nip)) return notify('warn','NIP tidak valid.');
+
+  setLoading(btn, true, 'Mengirim...');
+  document.getElementById('izinLoading').style.display='block';
+  try{
+    let base64='', fileType='', fileName='';
+    if(f){
+      const arr=await f.arrayBuffer(); const bytes=new Uint8Array(arr);
+      if(bytes.byteLength > CONFIG.MAX_BUKTI_MB*1024*1024) throw new Error(`Ukuran file melebihi ${CONFIG.MAX_BUKTI_MB}MB`);
+      fileType=f.type||'application/octet-stream'; fileName=f.name||'bukti.bin';
+      let bin='', chunk=0x8000;
+      for(let i=0;i<bytes.length;i+=chunk){ bin += String.fromCharCode.apply(null, bytes.subarray(i,i+chunk)); }
+      base64=btoa(bin);
+    }
+    const res = await apiPost({ nip, status:jenis, slot, keterangan:ket, file:base64, fileType, fileName });
+    notify(res.ok?'success':'warn', res.message || (res.ok?'Berhasil.':'Gagal.'));
+    izinModal.style.display='none'; izinModal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open');
+    if(res.riwayat) renderRiwayat(res);
+  }catch(err){
+    notify('error','Gagal mengirim data: '+err.message);
+  }finally{
+    setLoading(btn, false);
+    document.getElementById('izinLoading').style.display='none';
+  }
+});
+
+/* ====== RULES (ringkas) ====== */
+const RULES_HTML = `
+<section>
+  <h5>1) Jam Presensi</h5>
+  <ul>
+    <li><strong>Reguler:</strong><br>
+Apel: {{APEL}} (Sen–Kam)<br>
+Masuk: {{MASUK}}<br>
+Siang: {{SIANG}}<br>
+Pulang: {{PULANG}}
+    </li>
+    <li><strong>Penjaga Malam:</strong> Absen Hanya 1 Kali (berdasarkan jadwal)</li>
+    <li><strong>Petugas Kebersihan:</strong> Absen Hanya 1 Kali (berdasarkan jadwal)</li>
+  </ul>
+</section>
+
+<section>
+  <h5>2) Jadwal Kerja & Libur</h5>
+  <ul>
+    <li>Pegawai reguler: pola full/genap/ganjil. Senin & Jumat tetap masuk.</li>
+    <li>Libur nasional tidak bisa absen.</li>
+    <li>Penjaga malam & kebersihan tidak terikat pola ganjil/genap.</li>
+  </ul>
+</section>
+
+<section>
+  <h5>3) Lokasi & Akurasi GPS</h5>
+  <ul>
+    <li>Radius kantor: 25 m. Akurasi maksimal: 50 m.</li>
+    <li>Manual absen: GEO invalid → langsung ditolak.</li>
+  </ul>
+</section>
+
+<section>
+  <h5>4) Izin / Sakit / Pulang Cepat</h5>
+  <ul>
+    <li>Ajukan via tombol Izin/Sakit (bukti opsional JPG/PNG/PDF ≤ 10MB).</li>
+  </ul>
+</section>
+
+<section>
+  <h5>5) Cara Absen</h5>
+  <ul>
+    <li>Scan QR atau input NIP manual.</li>
+    <li>Menu Riwayat menampilkan rekap hari ini.</li>
+  </ul>
+</section>`;
+(function(){
+  const btnOpen=document.getElementById('btnRules');
+  const modal=document.getElementById('rulesModal');
+  const btnClose=document.getElementById('btnCloseRules');
+  const content=document.getElementById('rulesContent');
+  if(!btnOpen||!modal||!btnClose||!content) return;
+  content.innerHTML=RULES_HTML;
+  const open=()=>{ modal.style.display='block'; modal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); };
+  const close=()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); };
+  btnOpen.addEventListener('click',open); btnClose.addEventListener('click',close);
+  modal.addEventListener('click',(e)=>{ if(e.target===modal) close(); });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') close(); });
+})();
+
+/* ====== SELFIE (untuk reguler) ====== */
+const selfieModal=document.getElementById('selfieModal');
+const videoEl=document.getElementById('selfieVideo');
+const canvasEl=document.getElementById('selfieCanvas');
+const previewBox=document.getElementById('selfiePreview');
+const previewImg=previewBox.querySelector('img');
+const btnStart=document.getElementById('btnSelfieStart');
+const btnShot=document.getElementById('btnSelfieShot');
+const btnRetake=document.getElementById('btnSelfieRetake');
+const btnSend=document.getElementById('btnSendSelfie');
+const btnCancel=document.getElementById('btnCancelSelfie');
+
+let mediaStream=null;
+let pendingAction=null;
+
+function openSelfieModal(){ selfieModal.style.display='block'; selfieModal.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open'); resetSelfieUI(); }
+function closeSelfieModal(){ selfieModal.style.display='none'; selfieModal.setAttribute('aria-hidden','true'); document.body.classList.remove('modal-open'); stopCamera(); pendingAction=null; resetSelfieUI(); }
+function resetSelfieUI(){ previewBox.classList.add('hidden'); previewImg.src=''; videoEl.style.display='block'; btnShot.disabled=true; btnRetake.classList.add('hidden'); btnSend.disabled=true; }
+async function startCamera(){ try{ stopCamera(); mediaStream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false }); videoEl.srcObject=mediaStream; await videoEl.play(); btnShot.disabled=false; }catch(e){ notify('error','Tidak dapat mengakses kamera: '+e.message); } }
+function stopCamera(){ if(mediaStream){ mediaStream.getTracks().forEach(t=>t.stop()); mediaStream=null; } }
+
+btnStart.addEventListener('click', startCamera);
+btnShot.addEventListener('click', ()=>{
+  if(!videoEl.videoWidth) return;
+
+  canvasEl.width = videoEl.videoWidth;
+  canvasEl.height = videoEl.videoHeight;
+
+  const ctx = canvasEl.getContext('2d');
+
+  // Foto utama
+  ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+  // === WATERMARK BAR ===
+  const barHeight = 110;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillRect(0, canvasEl.height - barHeight, canvasEl.width, barHeight);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '14px system-ui';
+  ctx.textBaseline = 'top';
+
+  const pad = 14;
+  const lines = [
+    `Nama   : ${WATERMARK_INFO.nama}`,
+    `NIP    : ${WATERMARK_INFO.nip}`,
+    `Tanggal : ${WATERMARK_INFO.tanggal}`,
+    `Waktu  : ${WATERMARK_INFO.jamFull} (SERVER)`,
+    `Lokasi : ${WATERMARK_INFO.lat}, ${WATERMARK_INFO.lng}`
+  ];
+
+  lines.forEach((t,i)=>{
+    ctx.fillText(t, pad, canvasEl.height - barHeight + 8 + (i*18));
+  });
+
+  // Preview
+  previewImg.src = canvasEl.toDataURL('image/jpeg',0.9);
+  previewBox.classList.remove('hidden');
+  videoEl.style.display='none';
+  btnRetake.classList.remove('hidden');
+  btnSend.disabled=false;
+});
+
+btnRetake.addEventListener('click', ()=>{ previewBox.classList.add('hidden'); previewImg.src=''; videoEl.style.display='block'; btnRetake.classList.add('hidden'); btnSend.disabled=true; });
+btnCancel.addEventListener('click', closeSelfieModal);
+
+btnSend.addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  if(!pendingAction) return;
+  const { nip, apel, lat, lng, accuracy, force } = pendingAction;
+  const dataURL = canvasEl.toDataURL('image/jpeg',0.85);
+  const base64 = dataURL.split(',')[1];
+
+  setLoading(btn, true, 'Menyimpan...');
+  try{
+    const res = await apiPost({
+      nip, lat, lng, accuracy,
+      apel: apel ? 'true':'false',
+      selfie: base64, selfieType:'image/jpeg', selfieName:'selfie.jpg',
+      force: force ? 'true':'false'
+    });
+    notify(res.ok?'success':'warn', res.message || (res.ok?'Berhasil.':'Gagal.'));
+    if(res.riwayat) renderRiwayat(res);
+  }catch(err){
+    notify('error','Gagal menyimpan: '+err.message);
+  }finally{
+    setLoading(btn, false);
+    closeSelfieModal();
+  }
+});
+
+/* ====== FLOW ABSEN ====== */
+async function doPrecheckAndSelfie(nip,{apel=false}={}){
+  if(!REMOTE_READY){ try{ await loadRemoteConfig(); }catch{} }
+  try{
+    const coords=await getLocation();
+    const pre=await apiPost({
+      nip,
+      lat: coords.lat, lng: coords.lng, accuracy: Math.round(coords.accuracy),
+      checkOnly: 'true',
+      apel: apel ? 'true' : 'false'
+    });
+
+        if (!pre.ok) {
+  notify('error', pre.message || 'Validasi gagal.');
+  return;
+}
+
+const konfirmasi = confirm(
+  `Konfirmasi Data Pegawai:\n\n` +
+  `Nama : ${pre.nama}\n` +
+  `NIP  : ${nip}\n\n` +
+  `Apakah ini benar Anda?`
+);
+
+if (!konfirmasi) {
+  notify('info', 'Presensi dibatalkan.');
+  return;
+}
+
+    // === SET WATERMARK DATA (SERVER TIME + IDENTITAS) ===
+WATERMARK_INFO = {
+  nama: pre.nama || '',
+  nip: nip,
+  jamFull: (pre.serverTime || '').slice(0,8),
+  tanggal: pre.serverDate || '',
+  lat: coords.lat.toFixed(6),
+  lng: coords.lng.toFixed(6)
+};
+
+
+    // Helper fallback jika backend lama belum kirim code
+    const msg = (pre && pre.message) ? String(pre.message) : '';
+    const looksGeoInvalid = /Akurasi GPS|radius kantor|Lokasi tidak valid/i.test(msg);
+
+    if(apel){
+      // APEL TANPA SELFIE — kalau warning, langsung tolak (tanpa confirm)
+      if(pre.warning){
+        notify('warn', pre.message || 'Apel tidak tersedia saat ini.');
+        return;
+      }
+      try{
+        const res = await apiPost({
+          nip, apel:'true',
+          lat:coords.lat, lng:coords.lng, accuracy:Math.round(coords.accuracy),
+          force: 'false'
+        });
+        notify(res.ok?'success':'warn', res.message || (res.ok?'Berhasil.':'Gagal.'));
+        if(res.riwayat) renderRiwayat(res);
+      }catch(err){
+        notify('error','Gagal menyimpan apel: '+err.message);
+      }
+      return;
+    }
+
+    // REGULER:
+    if (pre.warning) {
+      const code = pre.code || '';
+      const geoCodes = new Set(['GEO_ACCURACY_WEAK','GEO_OUT_OF_RADIUS','GEO_LOCATION_INVALID']);
+      if (geoCodes.has(code) || looksGeoInvalid) {
+        notify('warn', pre.message || 'Lokasi/akurasi tidak valid. Absen ditolak.');
+        return;
+      }
+      // Warning non-GEO → tetap minta konfirmasi
+      const ok = confirm(`${pre.message}\nLanjutkan absen?`);
+      if (!ok) { notify('info','Dibatalkan oleh pengguna.'); return; }
+      pendingAction = {
+        nip, apel:false,
+        lat: coords.lat, lng: coords.lng, accuracy: Math.round(coords.accuracy),
+        force: true
+      };
+    } else {
+      pendingAction = {
+        nip, apel:false,
+        lat: coords.lat, lng: coords.lng, accuracy: Math.round(coords.accuracy),
+        force: false
+      };
+    }
+    openSelfieModal();
+  }catch(err){
+    notify('error', String(err&&err.message?err.message:err));
+  }
+}
+
+/* ====== FORM & QR ====== */
+const form=document.getElementById('absenForm');
+const btnManual=document.getElementById('btnManualAbsen');
+const btnApel=document.getElementById('btnApel');
+const btnRiwayat=document.getElementById('btnRiwayat');
+const nipInput=document.getElementById('nip');
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const nip=nipInput.value.trim();
+  if(!/^[A-Za-z0-9_-]{3,20}$/.test(nip)) return notify('warn','NIP tidak valid.');
+  setLoading(btnManual,true,'Memproses...');
+  try{ await doPrecheckAndSelfie(nip,{apel:false}); } finally { setLoading(btnManual,false); }
+});
+
+btnApel.addEventListener('click', async ()=>{
+  const nip=nipInput.value.trim();
+  if(!/^[A-Za-z0-9_-]{3,20}$/.test(nip)) return notify('warn','NIP tidak valid.');
+  setLoading(btnApel,true,'Memproses...');
+  try{ await doPrecheckAndSelfie(nip,{apel:true}); } finally { setLoading(btnApel,false); }
+});
+
+btnRiwayat.addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  const nip=nipInput.value.trim(); if(!nip) return notify('warn','Isi NIP terlebih dahulu.');
+  setLoading(btn,true,'Memuat…');
+  try{
+    const res=await apiPost({ nip, riwayat:'true' });
+    const m = res && res.message ? res.message : '';
+    notify(m==='📭 Belum ada riwayat.'?'warn':'success', m || 'Riwayat dimuat.');
+    renderRiwayat(res);
+  }catch(err){
+    notify('error','Gagal memuat riwayat: '+err.message);
+  }finally{
+    setLoading(btn,false);
+  }
+});
+
+/* QR Scanner */
+let html5QrcodeScanner=null;
+const scannerDiv=document.getElementById('scanner');
+const btnScan=document.getElementById('btnScan');
+btnScan.addEventListener('click', async (e)=>{
+  const btn=e.currentTarget;
+  if(!html5QrcodeScanner){
+    setLoading(btn,true,'Menyiapkan…');
+    try{
+      scannerDiv.style.display='block';
+      html5QrcodeScanner=new Html5Qrcode('scanner');
+      await html5QrcodeScanner.start(
+        { facingMode:'environment' }, { fps:10, qrbox:250 },
+        async (qr)=>{
+          const value=(qr||'').trim().replace(/[^A-Za-z0-9_-]/g,'');
+          if(!value) return;
+          nipInput.value=value;
+          await doPrecheckAndSelfie(value,{apel:false});
+          stopScanner();
+        }
+      );
+      btn.textContent='Stop Scan QR Code';
+      setLoading(btn,false);
+    }catch(e2){
+      notify('error','Tidak dapat mengakses kamera.');
+      stopScanner();
+      setLoading(btn,false);
+    }
+  }else{
+    stopScanner();
+  }
+});
+function stopScanner(){
+  if(html5QrcodeScanner){
+    html5QrcodeScanner.stop().finally(()=>{
+      html5QrcodeScanner.clear(); html5QrcodeScanner=null;
+      scannerDiv.style.display='none';
+      btnScan.textContent='Mulai Scan QR Code';
+      const sp = btnScan.querySelector('.spinner'); if (sp) sp.style.display='none';
+      btnScan.disabled=false;
+    });
+  }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) stopScanner(); });
+</script>
+</body>
+</html>

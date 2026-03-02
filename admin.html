@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard Admin – Disdukcapil Majene</title>
+
+<style>
+:root{
+  --ink:#0f172a;
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#6b7280;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+
+
+main{
+  max-width:1000px;
+  margin:24px auto;
+  padding:0 16px;
+}
+
+/* MENU */
+.menu-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:18px;
+  margin-bottom:24px;
+}
+
+.menu-grid button{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:18px 22px;
+  font-size:16px;
+  font-weight:700;
+  border-radius:40px;
+  border:none;
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(0,0,0,.2);
+  transition:.2s;
+}
+.menu-grid button:hover{transform:translateY(-2px)}
+
+.btn-izin{background:linear-gradient(135deg,#b91c1c,#7f1d1d)}
+.btn-libur{background:linear-gradient(135deg,#2563eb,#1e40af)}
+.btn-kerja{background:linear-gradient(135deg,#b45309,#78350f)}
+.btn-dinas{background:linear-gradient(135deg,#059669,#065f46)}
+
+.btn-menu{
+  background:linear-gradient(135deg,#111827,#1f2937);
+  opacity:.9;
+}
+.btn-menu:hover{opacity:1}
+
+.menu-grid span{
+  font-size:22px;
+}
+
+/* PANEL */
+.panel{
+  background:var(--card);
+  border-radius:16px;
+  padding:20px;
+  box-shadow:0 8px 20px rgba(0,0,0,.1);
+  animation:fade .25s ease;
+}
+.hidden{display:none}
+
+@keyframes fade{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:none}
+}
+
+.panel h3{
+  margin-top:0;
+  margin-bottom:16px;
+}
+
+/* FORM */
+label{font-weight:600;display:block;margin-bottom:6px}
+input,textarea{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  margin-bottom:12px;
+}
+textarea{resize:vertical}
+
+button.submit{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  padding:10px 18px;
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+}
+th{background:#f1f5f9}
+
+.action button{
+  margin-right:6px;
+  padding:6px 10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.approve{background:#16a34a;color:#fff}
+.reject{background:#dc2626;color:#fff}
+
+   /* Header */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 25px;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-bottom: 2px solid #ccc;
+  border-radius: 10px;
+}
+.logo-majene { width: 70px; height: 70px; object-fit: contain; }
+.instansi-info h1 {
+  margin: 0; font-size: 1.2em; color: #003366; font-weight: 700; text-align: center;
+}
+.instansi-info p {
+  margin: 2px 0 0; font-size: .95em; color: #444; text-align: center;
+}
+
+    /* Tombol menu */
+  .menu{display:flex;align-items:center;gap:8px}
+  .menu a{color:#fff;text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;background:#1e293b;transition:background .2s}
+  .menu a:hover{background:#334155}
+   @media (max-width:900px){
+    .menu a{font-size:13px;padding:6px 10px}}
+
+    .container{
+  max-width:950px;
+  margin:auto;
+  background:#fff;
+  border-radius:16px;
+  padding:20px 24px; /* ⬅️ kanan–kiri lebih lega */
+  box-shadow:0 10px 30px rgba(0,0,0,.1);
+}
+
+/* ===== SPINNER ===== */
+.spinner{
+  width:16px;
+  height:16px;
+  border:2px solid rgba(255,255,255,.4);
+  border-top:2px solid #fff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  display:inline-block;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+button.loading{
+  pointer-events:none;
+  opacity:.7;
+}
+
+button.loading span{
+  display:none;
+}
+
+</style>
+</head>
+
+<body>
+  <div class="container">
+
+  <header class="site-header">
+    <img src="logo_majene.png" alt="Logo Majene" class="logo-majene">
+    <div class="instansi-info">
+      <h1>DISDUKCAPIL KABUPATEN MAJENE</h1>
+      <p>Dinas Kependudukan dan Pencatatan Sipil</p>
+    </div>
+
+    
+  </header>
+
+<main>
+
+  <p style="font-size:.8em;color:#6b7280">
+  Dashboard Admin Presensi Online
+</p>
+
+<!-- MENU -->
+<div class="menu-grid">
+  <button class="btn-izin" onclick="showPanel('izin')">
+    <span>📝</span> Approval Izin
+  </button>
+  <button class="btn-libur" onclick="showPanel('libur')">
+    <span>📅</span> Tambah Libur
+  </button>
+  <button class="btn-kerja" onclick="showPanel('kerja')">
+    <span>⚙️</span> Kerja Tambahan
+  </button>
+  <button class="btn-dinas" onclick="showPanel('dinas')">
+    <span>🏆</span> Dinas Luar
+  </button>
+
+<!-- Menu kanan -->
+<button class="btn-menu" onclick="location.href='https://capil-hadir.netlify.app/detail'">
+  <span>📋</span> Detail Presensi
+</button>
+
+<button class="btn-menu" onclick="location.href='https://capil-hadir.netlify.app/summary'">
+  <span>📊</span> Summary Presensi
+</button>
+    
+</div>
+
+<!-- PANEL IZIN -->
+<div id="panel-izin" class="panel hidden">
+  <h3>📝 Approval Izin</h3>
+  <table id="izinTable">
+    <thead>
+      <tr>
+        <th>Tanggal</th><th>NIP</th><th>Nama</th><th>Slot</th><th>Jenis</th><th>Aksi</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<!-- PANEL LIBUR -->
+<div id="panel-libur" class="panel hidden">
+  <h3>📅 Tambah Libur</h3>
+  <label>Tanggal</label>
+  <input type="date" id="liburTanggal">
+  <label>Keterangan</label>
+  <textarea id="liburKet"></textarea>
+  <button class="submit" onclick="addLibur(this)">Simpan</button>
+</div>
+
+<!-- PANEL KERJA TAMBAHAN -->
+<div id="panel-kerja" class="panel hidden">
+  <h3>⚙️ Tambah Kerja Tambahan</h3>
+  <label>Tanggal</label>
+  <input type="date" id="kerjaTanggal">
+  <label>Keterangan</label>
+  <textarea id="kerjaKet"></textarea>
+  <button class="submit" onclick="addKerja(this)">Simpan</button>
+</div>
+
+<!-- PANEL DINAS LUAR -->
+<div id="panel-dinas" class="panel hidden">
+  <h3>🏆 Tambah Dinas Luar</h3>
+  <label>Tanggal</label>
+  <input type="date" id="dinasTanggal">
+  <label>NIP</label>
+  <input type="text" id="dinasNip">
+  <label>Keterangan</label>
+  <textarea id="dinasKet"></textarea>
+  <button class="submit" onclick="addDinas(this)">Simpan</button>
+</div>
+</div>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbwlhz0VdLW2ogFZlO_V0Wf6fAbZpsTYLbppuQfBcsHU8I1VxDbiPNH9gBbb89YM83q0/exec";
+const KEY = "absendukcapilmajene";
+
+function setLoading(btn, isLoading){
+  if(isLoading){
+    btn.classList.add('loading');
+    btn.dataset.html = btn.innerHTML;
+    btn.innerHTML = `<div class="spinner"></div>`;
+  }else{
+    btn.classList.remove('loading');
+    btn.innerHTML = btn.dataset.html;
+  }
+}
+
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('panel-'+id).classList.remove('hidden');
+  if(id==='izin') loadIzin();
+}
+
+/* ================= IZIN ================= */
+function loadIzin(){
+  fetch(API_URL,{
+    method:"POST",
+    body:new URLSearchParams({admin:true,key:KEY,action:"listIzinPending"})
+  })
+  .then(r=>r.json())
+  .then(j=>{
+    const tb=document.querySelector("#izinTable tbody");
+    tb.innerHTML="";
+    j.data.forEach(d=>{
+      tb.innerHTML+=`
+        <tr>
+          <td>${d.tanggal}</td>
+          <td>${d.nip}</td>
+          <td>${d.nama}</td>
+          <td>${d.slot}</td>
+          <td>${d.jenis}</td>
+          <td class="action">
+  <button class="approve" onclick="updateIzin(this,${d.row},'DISETUJUI')">✔</button>
+  <button class="reject" onclick="updateIzin(this,${d.row},'DITOLAK')">✖</button>
+</td>
+        </tr>`;
+    });
+  });
+}
+
+function updateIzin(btn,row,status){
+  setLoading(btn,true);
+  fetch(API_URL,{
+    method:"POST",
+    body:new URLSearchParams({
+      admin:true,
+      key:KEY,
+      action:"updateIzinStatus",
+      row,
+      status
+    })
+  })
+  .then(()=>loadIzin());
+}
+
+/* ================= CRUD ================= */
+function addLibur(btn){
+  setLoading(btn,true);
+  fetch(API_URL,{
+    method:"POST",
+    body:new URLSearchParams({
+      admin:true,key:KEY,action:"addLibur",
+      tanggal:liburTanggal.value,
+      ket:liburKet.value
+    })
+  })
+  .then(()=>alert("Libur ditambahkan"))
+  .finally(()=>setLoading(btn,false));
+}
+function addKerja(btn){
+  setLoading(btn,true);
+  fetch(API_URL,{
+    method:"POST",
+    body:new URLSearchParams({
+      admin:true,key:KEY,action:"addKerjaTambahan",
+      tanggal:kerjaTanggal.value,
+      ket:kerjaKet.value
+    })
+  })
+  .then(()=>alert("Kerja tambahan ditambahkan"))
+  .finally(()=>setLoading(btn,false));
+}
+function addDinas(btn){
+  setLoading(btn,true);
+  fetch(API_URL,{
+    method:"POST",
+    body:new URLSearchParams({
+      admin:true,key:KEY,action:"addDinasLuar",
+      tanggal:dinasTanggal.value,
+      nip:dinasNip.value,
+      ket:dinasKet.value
+    })
+  })
+  .then(()=>alert("Dinas luar ditambahkan"))
+  .finally(()=>setLoading(btn,false));
+}
+</script>
+
+</body>
+</html>

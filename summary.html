@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rekap Summary – Presensi Pegawai</title>
+<style>
+  :root{--ink:#0f172a;--bg:#f7f7f8;--card:#fff;--line:#e5e7eb;--brand:#2563eb}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg)}
+  header{background:var(--ink);color:#fff;padding:14px}
+  header h1{margin:0;font-size:18px}
+  main{max-width:900px;margin:18px auto;padding:0 12px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .col{flex:1 1 160px}
+  label{font-size:12px;color:#555}
+  select,input,button{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px}
+  button{background:var(--brand);color:#fff;border:0;font-weight:700;cursor:pointer}
+  button.secondary{background:#1e293b}
+  .meta{margin-top:10px;color:#555;font-size:13px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{padding:8px;border-bottom:1px solid var(--line);font-size:14px}
+  th{background:#f1f5f9;text-align:left}
+  .tools{display:flex;gap:8px;margin-top:10px}
+
+
+    /* Header */
+  header{padding:12px 16px;background:var(--ink);color:#fff;position:relative}
+  .head-wrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:8px;background:#ffffff10;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .logo img{width:100%;height:100%;object-fit:contain;display:block}
+  .head-text{line-height:1.2}
+  .head-text h1{margin:0;font-size:18px}
+  .head-text .muted{color:#cbd5e1;font-size:12px}
+
+    /* Tombol menu */
+  .menu{display:flex;align-items:center;gap:8px}
+  .menu a{color:#fff;text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;background:#1e293b;transition:background .2s}
+  .menu a:hover{background:#334155}
+   @media (max-width:900px){
+    .menu a{font-size:13px;padding:6px 10px}}
+
+.table-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:#fff;
+  -webkit-overflow-scrolling:touch;
+}
+</style>
+</head>
+
+<body>
+
+  <header>
+    <div class="head-wrap">
+      <div class="brand">
+        <div class="logo">
+          <img src="logo_majene.png" alt="Logo Pemkab Majene" />
+        </div>
+        <div class="head-text">
+          <h1>Capil-Hadir</h1>
+          <div class="muted">Rekap Summary • Disdukcapil Majene</div>
+        </div>
+      </div>
+
+      <!-- Menu kanan -->
+      <div class="menu">
+        <a id="backLink1" href="#">⇦ Kembali ke Presensi</a>
+        <a id="backLink2" href="#">Detail Presensi ⇨</a>
+      </div>
+    </div>
+  </header>
+
+<main>
+  <div class="card">
+    <div class="row">
+      <div class="col">
+        <label>Bulan</label>
+        <select id="month"></select>
+      </div>
+      <div class="col">
+        <label>Tahun</label>
+        <input id="year" type="number"/>
+      </div>
+   <div class="col">
+  <label>Status</label>
+  <select id="status">
+    <option value="ALL">Semua</option>
+    <option value="PNS">PNS</option>
+    <option value="PPPK">PPPK</option>
+    <option value="PPPK PW">PPPK PW</option>
+  </select>
+</div>
+
+      <div class="col" style="align-self:flex-end">
+        <button id="btnLoad">Load</button>
+      </div>
+    </div>
+
+    <div class="meta" id="meta"></div>
+
+    <div class="tools" id="tools" style="display:none">
+      <button class="secondary" id="btnCsv">Download CSV</button>
+    </div>
+ 
+
+    <div class="table-scroll">
+  <table id="table" style="display:none">
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>NIP</th>
+          <th>Nama</th>
+          <th>Status</th>
+          <th>Apel</th>
+          <th>Hadir</th>
+          <th>Izin/Cuti</th>
+          <th>Sakit</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+   </div>
+</main>
+
+<script>
+const BASE_URL = 'https://script.google.com/macros/s/AKfycbze-wn6RmNbUShu6NQQbNz8N9NnjVFMxeqx7WBpwPKY50JXun-9nj2EhbgzefA7U4tEOg/exec';
+
+
+const BASE_SITE = window.location.origin;
+
+const MAIN_APP_URL1 = BASE_SITE + '/';
+const MAIN_APP_URL2 = BASE_SITE + '/detail';
+
+
+  document.getElementById('backLink1').href = MAIN_APP_URL1;
+  document.getElementById('backLink2').href = MAIN_APP_URL2;
+
+const monthEl = document.getElementById('month');
+const yearEl  = document.getElementById('year');
+const btnLoad = document.getElementById('btnLoad');
+const btnCsv  = document.getElementById('btnCsv');
+const metaEl  = document.getElementById('meta');
+const table   = document.getElementById('table');
+const tbody   = table.querySelector('tbody');
+const tools   = document.getElementById('tools');
+
+
+const bulan=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+bulan.forEach((b,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1} - ${b}`;monthEl.appendChild(o);});
+const now=new Date();monthEl.value=now.getMonth()+1;yearEl.value=now.getFullYear();
+
+btnLoad.onclick = loadData;
+btnCsv.onclick  = downloadCSV;
+
+let lastRows = [], lastMeta = {};
+
+async function loadData(){
+  const month = monthEl.value;
+  const year  = yearEl.value;
+  const status = document.getElementById('status').value; // ⬅️ pindahkan ke sini
+
+  btnLoad.disabled=true; 
+  btnLoad.textContent='Loading...';
+  tbody.innerHTML='';
+  table.style.display='none';
+  tools.style.display='none';
+
+  try{
+    const url = `${BASE_URL}?api=summary&year=${year}&month=${month}&status=${status}`;
+    const res = await fetch(url,{cache:'no-store'});
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.message||'Gagal');
+    render(data);
+  }catch(e){ 
+    alert(e.message); 
+  }
+  finally{ 
+    btnLoad.disabled=false; 
+    btnLoad.textContent='Load'; 
+  }
+}
+
+function statusBadge(s){
+  const map = {
+    'PNS':'background:#dbeafe;color:#1e40af;padding:4px 8px;border-radius:8px;',
+    'PPPK':'background:#dcfce7;color:#166534;padding:4px 8px;border-radius:8px;',
+    'PPPK PW':'background:#f3e8ff;color:#6b21a8;padding:4px 8px;border-radius:8px;'
+  };
+  const style = map[s] || '';
+  return `<span style="${style}">${s}</span>`;
+}
+
+
+function render(d){
+  lastRows = d.rows || [];
+  lastMeta = d.meta || {};
+  metaEl.textContent = `Bulan ${lastMeta.bulanNama} ${lastMeta.year} • Status: ${document.getElementById('status').value} • Total Pegawai: ${lastMeta.totalPegawai}`;
+  lastRows.forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${r.NO}</td>
+      <td>'${r.NIP}</td>
+      <td>${r.NAMA}</td>
+      <td>${statusBadge(r.STATUS)}</td>
+      <td>${r.APEL}</td>
+      <td>${r.HADIR}</td>
+      <td>${r.IZIN}</td>
+      <td>${r.SAKIT}</td>`;
+    tbody.appendChild(tr);
+  });
+  table.style.display=''; tools.style.display='';
+}
+
+function downloadCSV(){
+  const header=['NO','NIP','NAMA','STATUS','APEL','HADIR','IZIN','SAKIT'];
+  const rows = lastRows.map(r=>[
+    r.NO,
+    `="${r.NIP}"`, // ⬅️ AMAN: NIP tidak terpotong di Excel
+    `"${r.NAMA.replace(/"/g,'""')}"`, // ⬅️ wajib
+    r.STATUS,
+    r.APEL,
+    r.HADIR,
+    r.IZIN,
+    r.SAKIT
+  ]);
+  const csv = [header,...rows].map(r=>r.join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const m=String(monthEl.value).padStart(2,'0');
+  a.href=url; a.download=`rekap_presensi_${yearEl.value}-${m}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rekap Detail – Presensi Pegawai</title>
+<style>
+  :root{
+    --ink:#0f172a; --bg:#f7f7f8; --card:#fff; --muted:#6b7280; --brand:#2563eb;
+    --line:#e5e7eb; --th:#f1f5f9;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:#111;margin:0}
+
+  /* Header */
+  header{padding:12px 16px;background:var(--ink);color:#fff;position:relative}
+  .head-wrap{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:8px;background:#ffffff10;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .logo img{width:100%;height:100%;object-fit:contain;display:block}
+  .head-text{line-height:1.2}
+  .head-text h1{margin:0;font-size:18px}
+  .head-text .muted{color:#cbd5e1;font-size:12px}
+
+  /* Tombol menu */
+  .menu{display:flex;align-items:center;gap:8px}
+  .menu a{color:#fff;text-decoration:none;font-size:14px;padding:8px 12px;border-radius:8px;background:#1e293b;transition:background .2s}
+  .menu a:hover{background:#334155}
+
+  main{max-width:1100px;margin:16px auto 28px;padding:0 12px}
+  .card{background:var(--card);border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.08);padding:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .col{flex:1 1 220px;min-width:220px}
+  .col--nip{flex:0 1 280px;min-width:220px;max-width:320px}
+
+  label{display:block;font-size:12px;color:#555;margin-bottom:6px}
+  input,select,button{
+    width:100%;padding:10px 12px;border:1px solid var(--line);
+    border-radius:10px;background:#fff;font-size:14px
+  }
+  button{cursor:pointer;border:0;background:var(--brand);color:#fff;font-weight:600}
+  button.secondary{background:var(--ink)}
+  button:disabled{opacity:.6;cursor:not-allowed}
+
+  .meta{margin-top:10px;color:var(--muted);font-size:13px}
+
+  .kpi{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+}
+
+  .kpi .item{background:var(--ink);color:#fff;border-radius:12px;padding:12px}
+  .kpi .item h4{margin:0 0 4px;font-size:12px;color:#93c5fd;font-weight:600;letter-spacing:.4px}
+  .kpi .item div{font-size:20px;font-weight:800}
+
+  .tools{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+  .table-wrap{margin-top:12px;background:#fff;border-radius:14px;overflow:auto;border:1px solid var(--line)}
+  table{min-width:780px;width:100%;border-collapse:collapse}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}
+  th{background:var(--th);text-align:left}
+  tr:last-child td{border-bottom:0}
+
+  .badge{font-size:12px;padding:3px 8px;border-radius:999px;background:#e5e7eb;display:inline-block}
+  .badge.green{background:#dcfce7;color:#166534}
+  .badge.red{background:#fee2e2;color:#991b1b}
+  .badge.yellow{background:#fef9c3;color:#854d0e}
+
+  #debug{display:none!important}
+
+  @media (max-width:900px){
+    .kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .head-text h1{font-size:16px}
+    .menu a{font-size:13px;padding:6px 10px}
+  }
+  @media (max-width:520px){
+    .col{min-width:100%}
+    .col--nip{max-width:100%}
+    .kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="head-wrap">
+      <div class="brand">
+        <div class="logo">
+          <img src="logo_majene.png" alt="Logo Pemkab Majene" />
+        </div>
+        <div class="head-text">
+          <h1>Capil-Hadir</h1>
+          <div class="muted">Rekap Detail • Disdukcapil Majene</div>
+        </div>
+      </div>
+
+      <!-- Menu kanan -->
+      <div class="menu">
+        <a id="backLink1" href="#">⇦ Kembali ke Presensi</a>
+        <a id="backLink2" href="#">Summary Presensi ⇨</a>
+      </div>
+    </div>
+    
+  </header>
+
+  <main>
+    <div class="card">
+      <div class="row">
+        <div class="col col--nip">
+          <label for="nip">NIP</label>
+          <input id="nip" placeholder="Masukkan NIP" />
+        </div>
+        <div class="col">
+          <label for="month">Bulan</label>
+          <select id="month"></select>
+        </div>
+        <div class="col" style="flex:0 1 140px;min-width:140px">
+          <label for="year">Tahun</label>
+          <input id="year" type="number" value="2025" />
+        </div>
+        <div class="col" style="flex:0 1 140px;min-width:140px;align-self:flex-end">
+          <button id="btnLoad">Load</button>
+        </div>
+      </div>
+
+      <div id="meta" class="meta"></div>
+      <br>
+
+      <div class="kpi" id="kpi" style="display:none">
+        <div class="item"><h4>Apel</h4><div id="kApel">0</div></div>
+        <div class="item"><h4>Alpha</h4><div id="kAlpha">0</div></div>
+        <div class="item"><h4>Masuk</h4><div id="kMasuk">0</div></div>
+        <div class="item"><h4>Siang</h4><div id="kSiang">0</div></div>
+        <div class="item"><h4>Pulang</h4><div id="kPulang">0</div></div>
+        <div class="item"><h4>Telat</h4><div id="kTelat">0</div></div>
+        <div class="item"><h4>Izin/Cuti</h4><div id="kIzin">0</div></div>
+        <div class="item"><h4>Sakit</h4><div id="kSakit">0</div></div>
+        <div class="item"><h4>Pulang Cepat</h4><div id="kPC">0</div></div>
+        <div class="item"><h4>Kehadiran (%)</h4><div id="kPersen">0%</div>
+</div>
+      </div>
+
+      <div class="tools" id="tools" style="display:none">
+        <button class="secondary" id="btnCsv">Download CSV</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="table" style="display:none">
+          <thead>
+            <tr>
+              <th style="width:120px">Tanggal</th>
+              <th style="width:100px">Hari</th>
+                            <th>Apel</th>
+              <th>Masuk</th>
+              <th>Siang</th>
+              <th>Pulang</th>
+
+              <th>Status</th>
+              <th>Keterangan</th>
+
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <pre id="debug"></pre>
+    </div>
+  </main>
+
+<script>
+  const BASE_URL = 'https://script.google.com/macros/s/AKfycbxWULvf3ArDbTgQ7XuJ9KsqLRI1vUhXDtmpsYxorQ5IUvdcTL147_FPnL__mJabqlPH/exec';
+  
+const BASE_SITE = window.location.origin;
+
+const MAIN_APP_URL1 = BASE_SITE + '/';
+const MAIN_APP_URL2 = BASE_SITE + '/summary';
+
+  const kPersen = document.getElementById('kPersen');
+
+  const kAlpha=document.getElementById('kAlpha');
+
+  document.getElementById('backLink1').href = MAIN_APP_URL1;
+  document.getElementById('backLink2').href = MAIN_APP_URL2;
+
+  const monthEl=document.getElementById('month'),yearEl=document.getElementById('year'),
+        nipEl=document.getElementById('nip'),btnLoad=document.getElementById('btnLoad'),
+        metaEl=document.getElementById('meta'),kpiWrap=document.getElementById('kpi'),
+        tools=document.getElementById('tools'),table=document.getElementById('table'),
+        tbody=table.querySelector('tbody');
+  const kMasuk=document.getElementById('kMasuk'),kSiang=document.getElementById('kSiang'),
+        kPulang=document.getElementById('kPulang'),kApel=document.getElementById('kApel'),
+        kTelat=document.getElementById('kTelat'),kIzin=document.getElementById('kIzin'),
+        kSakit=document.getElementById('kSakit'),kPC=document.getElementById('kPC'),
+        btnCsv=document.getElementById('btnCsv');
+
+  const bulan=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  bulan.forEach((b,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=`${i+1} - ${b}`;monthEl.appendChild(o);});
+  const now=new Date();monthEl.value=now.getMonth()+1;yearEl.value=now.getFullYear();
+  btnLoad.addEventListener('click',loadSummary);btnCsv.addEventListener('click',downloadCSV);
+
+  async function loadSummary(){
+    const nip=(nipEl.value||'').trim(),month=String(parseInt(monthEl.value||'0',10)),year=String(parseInt(yearEl.value||'0',10));
+    if(!nip){alert('Masukkan NIP');return;}
+    if(!BASE_URL.includes('/exec')){alert('BASE_URL belum benar');return;}
+    btnLoad.disabled=true;btnLoad.textContent='Loading...';
+    metaEl.textContent='';kpiWrap.style.display='none';tools.style.display='none';table.style.display='none';tbody.innerHTML='';
+
+    const qs=new URLSearchParams({api:'summary',nip,month,year});
+    const url=`${BASE_URL}?${qs}`;
+    try{
+      const res=await fetch(url,{method:'GET',cache:'no-store'});if(!res.ok)throw new Error(`HTTP ${res.status}`);
+      const data=await res.json();if(!data.ok)throw new Error(data.message||'Gagal memuat');renderSummary(data);
+    }catch(e){alert('Gagal memuat: '+e.message);}finally{btnLoad.disabled=false;btnLoad.textContent='Load';}
+  }
+
+  function renderSummary(d){
+    const{meta,totals,rows}=d;
+    metaEl.textContent=`NIP: ${meta.nip} • ${meta.nama||'-'} • ${meta.bulanNama} ${meta.year} • Hari kerja: ${meta.hariKerja} • Libur: ${meta.libur}`;
+    kMasuk.textContent=totals.hadirMasuk??0;kSiang.textContent=totals.hadirSiang??0;
+    kPulang.textContent=totals.hadirPulang??0;kApel.textContent=totals.apel??0;
+    kTelat.textContent=totals.telat??0;kIzin.textContent=totals.izin??0;
+    kSakit.textContent=totals.sakit??0;kPC.textContent=totals.pulangCepat??0;kpiWrap.style.display='';
+    tbody.innerHTML='';
+    kAlpha.textContent=totals.alpha??0;
+    const persen = totals.persentase ?? 0;
+kPersen.textContent = persen + '%';
+
+// 🎨 WARNA OTOMATIS
+if (persen >= 95) {
+  kPersen.style.color = '#22c55e'; // hijau
+}
+else if (persen >= 80) {
+  kPersen.style.color = '#eab308'; // kuning
+}
+else {
+  kPersen.style.color = '#ef4444'; // merah
+}
+
+    
+(rows || []).forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${safe(r.tanggal)}</td>
+    <td>${safe(r.hari)}</td>
+    <td style="text-align:center">
+      ${r.apel ? '<span class="badge green">Ya</span>' : '<span class="badge">-</span>'}
+    </td>
+    <td>${jamBadge(r.masuk)}</td>
+    <td>${jamBadge(r.siang)}</td>
+    <td>${jamBadge(r.pulang)}</td>
+    
+     <td>${statusBadge(r.statusHarian)}</td>
+    <td>${escapeHtml(r.keterangan || '')}</td>
+  `;
+  tbody.appendChild(tr);   // ⬅️ WAJIB
+});
+table.style.display = '';
+tools.style.display = '';
+
+  }
+  function jamBadge(v){return(!v||v==='-')?'<span class="badge">-</span>':`<span class="badge green">${safe(v)}</span>`;}
+  function statusBadge(v){
+  if(!v || v==='-') return '<span class="badge">-</span>';
+
+  const map = {
+    'HADIR':'green',
+    'TELAT':'yellow',
+    'IZIN':'yellow',
+    'SAKIT':'yellow',
+    'PULANG CEPAT':'yellow',
+    'ALPHA':'red',
+    'LIBUR':''
+  };
+
+  const cls = map[v] || '';
+  return `<span class="badge ${cls}">${safe(v)}</span>`;
+}
+
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+  function safe(v){return escapeHtml(v??'-')}
+function downloadCSV(){
+  // ambil meta terakhir
+  const nip  = (nipEl.value || '').trim();
+  const nama = (document.getElementById('meta').textContent.match(/•\s([^•]+)\s•/)||[])[1] || '';
+
+  // HEADER CSV (lengkap)
+  const header = [
+   'NIP',
+  'Nama',
+  'Tanggal',
+  'Hari',
+  'Apel',
+  'Masuk',
+  'Siang',
+  'Pulang',
+  'Status',
+  'Keterangan'
+  ];
+
+  const rows = [...tbody.querySelectorAll('tr')].map(tr => {
+    const cols = [...tr.children].map(td => td.textContent.replace(/\s+/g,' ').trim());
+
+    // cols[0] = tanggal tampilan (dd/MM/yyyy)
+    const t = cols[0].split('/'); // [dd, MM, yyyy]
+    const isoDate = (t.length===3) ? `${t[2]}-${t[1].padStart(2,'0')}-${t[0].padStart(2,'0')}` : cols[0];
+
+    return [
+      `'${nip}`,   // ⬅️ TRIK RESMI EXCEL (apostrophe)
+      nama,
+      isoDate,     // ⬅️ TANGGAL AMAN
+      cols[1],     // Hari
+      cols[2],     // Apel
+      cols[3],     // Masuk
+      cols[4],     // Siang
+      cols[5],     // Pulang
+      cols[6],   // Status
+  cols[7]    // Keterangan
+    ];
+  });
+
+  const csv = [header, ...rows]
+    .map(r => r.map(c =>
+      /[",\n]/.test(c) ? `"${c.replace(/"/g,'""')}"` : c
+    ).join(','))
+    .join('\n');
+
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  const m = String(parseInt(monthEl.value,10)).padStart(2,'0');
+  a.href = url;
+  a.download = `detail_${nip}_${yearEl.value}-${m}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+</script>
+</body>
+</html>
